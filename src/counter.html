@@ -1,0 +1,13 @@
+<script type="module" name="x-counter">
+  import { createSignal } from "/main.js";
+
+  const [count, setCount] = createSignal(0);
+  count.bindToText(refs.output);
+
+  refs.inc.onclick = () => setCount(count() + 1);
+  refs.dec.onclick = () => setCount(count() - 1);
+</script>
+
+<p ref="output">Counter</p>
+<button ref="inc">inc</button>
+<button ref="dec">dec</button>

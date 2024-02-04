@@ -1,0 +1,14 @@
+<div>
+  <script type="module">
+    import { createComponent, createSignal, loaded } from "/main.js";
+    const { refs } = await createComponent();
+
+    refs.addAnother.onclick = () => {
+      const div = document.createElement("div");
+      div.setAttribute("hx-load", "/counter.html");
+      refs.addAnother.before(div);
+      loaded();
+    };
+  </script>
+  <button ref="addAnother">Add another</button>
+</div>

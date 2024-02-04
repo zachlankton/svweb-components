@@ -1,0 +1,25 @@
+<script type="module" name="x-counter">
+  import { createSignal } from "/main.js";
+
+  const [count, setCount] = createSignal(0);
+  const [computed, setComputed] = createSignal(
+    ([count]) =>
+      `Computed String Value: <strong>${count()} time${
+        Math.abs(count()) === 1 ? "" : "s"
+      }</strong>`,
+    [count]
+  );
+
+  count.bindToText(refs.output);
+  computed.bindToHTML(refs.computed);
+
+  refs.inc.onclick = () => setCount(count() + 1);
+  refs.dec.onclick = () => setCount(count() - 1);
+</script>
+
+<p ref="output">Counter</p>
+<p ref="computed">Computed</p>
+<button ref="inc">inc</button>
+<button ref="dec">dec</button>
+
+--- component boundary ---
