@@ -14,31 +14,10 @@
     <x-counter color="blue"></x-counter>
     <hr />
 
-    <x-input-test initial-value='as"df'><p>Test</p></x-input-test>
+    <x-input-test initial-value='as"df'></x-input-test>
     <hr />
 
     <x-counter-computed></x-counter-computed>
     <hr />
-
-    <div id="inline-example">
-      <script type="module" id="3807b3cc-e2ed-45ef-a3db-5aee85e26ff7">
-        import { createComponent } from "/main.js";
-        const { refs, elm, module, children, props } = await createComponent(
-          "3807b3cc-e2ed-45ef-a3db-5aee85e26ff7"
-        );
-
-        import { createSignal } from "/main.js";
-
-        const [count, setCount] = createSignal(0);
-        count.bindToText(refs.output);
-
-        refs.inc.onclick = () => setCount(count() + 1);
-        refs.dec.onclick = () => setCount(count() - 1);
-      </script>
-
-      <p ref="output">0</p>
-      <button ref="inc">inc</button>
-      <button ref="dec">dec</button>
-    </div>
   </body>
 </html>

@@ -13,6 +13,8 @@ export async function cacheFetch(url) {
   return cache[url];
 }
 
+const comps = {};
+
 function createCustomElement(compTxt) {
   const div = document.createElement("div");
   div.innerHTML = compTxt;
@@ -26,22 +28,24 @@ function createCustomElement(compTxt) {
 
     connectedCallback() {
       if (this.hasAttribute("rendered")) return;
-      this.innerHTML = compTxt;
-      const script = this.querySelector("script[name]");
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = compTxt;
+      const script = tempDiv.querySelector("script[name]");
       const newScript = document.createElement("script");
       newScript.type = "module";
-      newScript.id = crypto.randomUUID();
+      const uuid = crypto.randomUUID();
+      this.uuid = uuid;
       newScript.innerHTML = `
             import { createComponent } from "${import.meta.url.replace(
               location.origin,
               ""
             )}";
-            const {refs, elm, module, children, props} = createComponent("${
-              newScript.id
-            }");
+            const {refs, elm, module, children, props} = createComponent("${uuid}");
             ${script.innerHTML} 
           `;
-      this.appendChild(newScript);
+      tempDiv.appendChild(newScript);
+      this.attachShadow({ mode: "open" }).appendChild(tempDiv);
+      comps[uuid] = this;
       script.remove();
       this.setAttribute("rendered", "");
     }
@@ -73,7 +77,7 @@ export async function loaded() {
 }
 
 function getAllRefs(elm) {
-  const refs = elm.querySelectorAll("[ref]");
+  const refs = elm.shadowRoot.querySelectorAll("[ref]");
   const refsMapped = {};
   refs.forEach((ref) => {
     refsMapped[ref.getAttribute("ref")] = ref;
@@ -82,8 +86,9 @@ function getAllRefs(elm) {
 }
 
 export function createComponent(id) {
-  const module = document.getElementById(id);
-  const elm = module.parentElement;
+  const elm = comps[id];
+  delete comps[id];
+  const module = elm.shadowRoot.querySelector("script");
   const propsLen = elm.attributes.length;
   const props = {};
   for (let i = 0; i < propsLen; i++) {
@@ -94,7 +99,7 @@ export function createComponent(id) {
       props[attr.name] = attr.value;
     }
   }
-  console.log(props);
+
   const children = Array.from(elm.children);
   children.pop();
   return { refs: getAllRefs(elm), elm, module, children, props };
