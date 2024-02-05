@@ -76,11 +76,11 @@ This will create a custom element `<x-counter>` that can be used anywhere in you
 
 Just add a script tag to your component and styles will be scoped using shadowDOM
 
-```css
+```html
 <style>
-    button {
-        padding: 15px;
-    }
+  button {
+    padding: 15px;
+  }
 </style>
 ```
 
