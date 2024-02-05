@@ -70,7 +70,7 @@ Below is a simplified example illustrating how to create a counter component tha
 <button ref="dec">Decrement</button>
 ```
 
-This will create a custom element `<x-counter>` that can be used anywhere in your markup. Check out the `index.html` file for examples.
+This will create a custom element `<x-counter>` that can be used anywhere in your markup. Check out the [`src/index.html`](https://github.com/zachlankton/svweb-components/blob/main/src/index.html) file for examples.
 
 ## Styling Components
 
@@ -92,4 +92,4 @@ Simple separate multiple components in a single file with a component boundary:
 --- component boundary ---
 ```
 
-See the `components.html` file for examples.
+See the [`src/components.html`](https://github.com/zachlankton/svweb-components/blob/main/src/components.html) file for examples.
