@@ -1,0 +1,54 @@
+<script type="module" name="x-counter">
+  import { createSignal } from "/main.js";
+
+  const [count, setCount] = createSignal(0);
+  count.bindToText(refs.output);
+
+  refs.inc.onclick = () => setCount(count() + 1);
+  refs.dec.onclick = () => setCount(count() - 1);
+</script>
+
+<p ref="output">Counter</p>
+<button ref="inc">inc</button>
+<button ref="dec">dec</button>
+<x-input-test initial-value="test"></x-input-test>
+
+--- component boundary ---
+
+<script type="module" name="x-input-test">
+  import { createSignal } from "/main.js";
+  const [val, setVal] = createSignal(props["initial-value"] || "");
+  val.bindToText(refs.output);
+  val.bindToInput(refs.input);
+  val.bindToInput(refs.input2);
+</script>
+
+<p ref="output">Counter</p>
+<input ref="input" />
+<input ref="input2" />
+
+--- component boundary ---
+
+<script type="module" name="x-counter-computed">
+  import { createSignal } from "/main.js";
+
+  const [count, setCount] = createSignal(0);
+  const [computed, setComputed] = createSignal(
+    ([count]) =>
+      `Computed String Value: <strong>${count()} time${
+        Math.abs(count()) === 1 ? "" : "s"
+      }</strong>`,
+    [count]
+  );
+
+  count.bindToText(refs.output);
+  computed.bindToHTML(refs.computed);
+
+  refs.inc.onclick = () => setCount(count() + 1);
+  refs.dec.onclick = () => setCount(count() - 1);
+</script>
+
+<p ref="output">Counter</p>
+<p ref="computed">Computed</p>
+<button ref="inc">inc</button>
+<button ref="dec">dec</button>

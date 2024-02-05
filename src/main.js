@@ -13,42 +13,63 @@ export async function cacheFetch(url) {
   return cache[url];
 }
 
-async function hxLoad() {
-  const hxLoads = document.querySelectorAll("[hx-load]");
-  const hxLoadPromises = [];
-  hxLoads.forEach((hxLoad) => {
-    const url = hxLoad.getAttribute("hx-load");
-    hxLoadPromises.push(
-      cacheFetch(url).then((html) => {
-        hxLoad.innerHTML = html;
-        const script = hxLoad.querySelectorAll("script");
-        script.forEach((script) => {
-          const newScript = document.createElement("script");
-          newScript.type = "module";
-          newScript.id = crypto.randomUUID();
-          newScript.innerText = `
-            import { createComponent } from "/main.js";
-            const {refs, elm, module} = await createComponent("${newScript.id}");
-            ${script.innerText}
-            module.remove();
-            const childLen = elm.children.length;
-            for (let i = childLen - 1; i >= 0; i--) {
-              const child = elm.children[i];
-              elm.after(child);
-            }
-            elm.remove();
+function createCustomElement(compTxt) {
+  const div = document.createElement("div");
+  div.innerHTML = compTxt;
+  const script = div.querySelector("script[name]");
+  const compName = script.getAttribute("name");
+
+  class newComp extends HTMLElement {
+    constructor() {
+      super();
+    }
+
+    connectedCallback() {
+      if (this.hasAttribute("rendered")) return;
+      this.innerHTML = compTxt;
+      const script = this.querySelector("script[name]");
+      const newScript = document.createElement("script");
+      newScript.type = "module";
+      newScript.id = crypto.randomUUID();
+      newScript.innerHTML = `
+            import { createComponent } from "${import.meta.url.replace(
+              location.origin,
+              ""
+            )}";
+            const {refs, elm, module, children, props} = createComponent("${
+              newScript.id
+            }");
+            ${script.innerHTML} 
           `;
-          hxLoad.appendChild(newScript);
-          script.remove();
+      this.appendChild(newScript);
+      script.remove();
+      this.setAttribute("rendered", "");
+    }
+  }
+  customElements.define(compName, newComp);
+}
+
+async function preload() {
+  const preloads = document.querySelectorAll(
+    "[rel=preload][as=fetch][crossorigin]"
+  );
+  const preloadPromises = [];
+  preloads.forEach((preload) => {
+    const url = preload.getAttribute("href");
+    preloadPromises.push(
+      cacheFetch(url).then((html) => {
+        const components = html.split("--- component boundary ---");
+        components.forEach((component) => {
+          createCustomElement(component);
         });
       })
     );
   });
-  return await Promise.allSettled(hxLoadPromises);
+  return await Promise.allSettled(preloadPromises);
 }
 
 export async function loaded() {
-  await hxLoad();
+  await preload();
 }
 
 function getAllRefs(elm) {
@@ -60,11 +81,23 @@ function getAllRefs(elm) {
   return refsMapped;
 }
 
-export async function createComponent(id) {
+export function createComponent(id) {
   const module = document.getElementById(id);
-  module.setAttribute("already-loaded", "");
   const elm = module.parentElement;
-  return { refs: getAllRefs(elm), elm, module };
+  const propsLen = elm.attributes.length;
+  const props = {};
+  for (let i = 0; i < propsLen; i++) {
+    const attr = elm.attributes[i];
+    try {
+      props[attr.name] = JSON.parse(attr.value);
+    } catch {
+      props[attr.name] = attr.value;
+    }
+  }
+  console.log(props);
+  const children = Array.from(elm.children);
+  children.pop();
+  return { refs: getAllRefs(elm), elm, module, children, props };
 }
 
 export function createSignal(initialValue, deps = []) {
@@ -91,6 +124,10 @@ export function createSignal(initialValue, deps = []) {
   };
   getValue.bindToHTML = (elmRef) => {
     bindTo("innerHTML", elmRef, getValue);
+  };
+  getValue.bindToInput = (elmRef) => {
+    bindTo("value", elmRef, getValue);
+    elmRef.oninput = (e) => setValue(e.target.value);
   };
   deps.forEach((dep) => {
     dep.subscribe((v) => {
